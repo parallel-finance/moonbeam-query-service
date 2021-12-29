@@ -14,5 +14,7 @@ dataSources:
     mapping:
       file: ./dist/index.js
       handlers:
-        - handler: moonbeamTermsSigned
+        - handler: handleMoonBeamTermsSigned
+          kind: substrate/CallHandler
+        - handler: handleMoonBeamRewardAddress
           kind: substrate/CallHandler

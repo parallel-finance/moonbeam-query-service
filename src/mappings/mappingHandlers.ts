@@ -1,6 +1,6 @@
 import { SubstrateExtrinsic } from '@subql/types'
 import type { Extrinsic } from '@polkadot/types/interfaces'
-import { MoonbeamTermsSigned } from '../types'
+import { MoonBeamTermsSigned, MoonBeamRewardAddress } from '../types'
 
 const MoonBeamTermsPDFHash = `0xc45eb5338b5879ff89d59ecf722cfede2e19a82bdec1948fbb2a0457e1ce3594`
 
@@ -16,7 +16,7 @@ const checkTransaction = (sectionFilter: string, methodFilter: string, call: Ext
   return section === sectionFilter && method === methodFilter
 }
 
-export async function moonbeamTermsSigned(extrinsic: SubstrateExtrinsic): Promise<void> {
+export async function handleMoonBeamTermsSigned(extrinsic: SubstrateExtrinsic): Promise<void> {
   const {
     isSigned,
     method: { args },
@@ -30,12 +30,12 @@ export async function moonbeamTermsSigned(extrinsic: SubstrateExtrinsic): Promis
   if (remark === `MoonBeamTermsPDFHash::${MoonBeamTermsPDFHash}`) {
     logger.info(remark)
     let account = extrinsic.extrinsic.signer.toString()
-    const record = await MoonbeamTermsSigned.get(account)
+    const record = await MoonBeamTermsSigned.get(account)
     if (record) {
       return
     }
 
-    const newRecord = MoonbeamTermsSigned.create({
+    const newRecord = MoonBeamTermsSigned.create({
       id: extrinsic.extrinsic.hash.toString(),
 
       blockHeight: extrinsic.block.block.header.number.toNumber(),
@@ -44,5 +44,42 @@ export async function moonbeamTermsSigned(extrinsic: SubstrateExtrinsic): Promis
     })
 
     await newRecord.save()
+  }
+}
+
+export async function handleMoonBeamRewardAddress(extrinsic: SubstrateExtrinsic): Promise<void> {
+  const {
+    isSigned,
+    method: { args },
+  } = extrinsic.extrinsic
+
+  if (!checkTransaction('system', 'remark', extrinsic.extrinsic) || !isSigned || !args[0]) {
+    return
+  }
+
+  const remark = parseRemark(args[0])
+  if (remark && remark.includes('MoonBeamRewardAddress::')) {
+    logger.info(remark)
+    let rewardAddress = remark.split('MoonBeamRewardAddress::')[1] || null
+    if (rewardAddress) {
+      let account = extrinsic.extrinsic.signer.toString()
+      const record = await MoonBeamRewardAddress.get(account)
+      if (record) {
+        record.rewardAddress = rewardAddress
+        record.save()
+        return
+      }
+
+      const newRecord = MoonBeamRewardAddress.create({
+        id: extrinsic.extrinsic.hash.toString(),
+
+        blockHeight: extrinsic.block.block.header.number.toNumber(),
+        account,
+        rewardAddress,
+        timestamp: extrinsic.block.timestamp,
+      })
+
+      await newRecord.save()
+    }
   }
 }
