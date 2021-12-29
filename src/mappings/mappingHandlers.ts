@@ -30,10 +30,6 @@ export async function handleMoonBeamTermsSigned(extrinsic: SubstrateExtrinsic): 
   if (remark === `MoonBeamTermsPDFHash::${MoonBeamTermsPDFHash}`) {
     logger.info(remark)
     let account = extrinsic.extrinsic.signer.toString()
-    const records = await MoonBeamTermsSigned.getByAccount(account)
-    if (records.length !== 0) {
-      return
-    }
 
     const newRecord = MoonBeamTermsSigned.create({
       id: extrinsic.extrinsic.hash.toString(),
@@ -63,14 +59,6 @@ export async function handleMoonBeamRewardAddress(extrinsic: SubstrateExtrinsic)
     let rewardAddress = remark.split('MoonBeamRewardAddress::')[1] || null
     if (rewardAddress) {
       let account = extrinsic.extrinsic.signer.toString()
-      const records = await MoonBeamRewardAddress.getByAccount(account)
-      if (records.length !== 0) {
-        records.forEach((r) => {
-          MoonBeamRewardAddress.remove(r.id)
-          r.save()
-        })
-      }
-
       const newRecord = MoonBeamRewardAddress.create({
         id: extrinsic.extrinsic.hash.toString(),
 
