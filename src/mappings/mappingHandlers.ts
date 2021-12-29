@@ -1,33 +1,48 @@
-import {SubstrateExtrinsic,SubstrateEvent,SubstrateBlock} from "@subql/types";
-import {StarterEntity} from "../types";
-import {Balance} from "@polkadot/types/interfaces";
+import { SubstrateExtrinsic } from '@subql/types'
+import type { Extrinsic } from '@polkadot/types/interfaces'
+import { MoonbeamTermsSigned } from '../types'
 
+const MoonBeamTermsPDFHash = `0xc45eb5338b5879ff89d59ecf722cfede2e19a82bdec1948fbb2a0457e1ce3594`
 
-export async function handleBlock(block: SubstrateBlock): Promise<void> {
-    //Create a new starterEntity with ID using block hash
-    let record = new StarterEntity(block.block.header.hash.toString());
-    //Record block number
-    record.field1 = block.block.header.number.toNumber();
-    await record.save();
+const parseRemark = (remark: { toString: () => string }) => {
+  logger.info(`Remark is ${remark.toString()}`)
+  return Buffer.from(remark.toString().slice(2), 'hex').toString('utf8')
 }
 
-export async function handleEvent(event: SubstrateEvent): Promise<void> {
-    const {event: {data: [account, balance]}} = event;
-    //Retrieve the record by its ID
-    const record = await StarterEntity.get(event.extrinsic.block.block.header.hash.toString());
-    record.field2 = account.toString();
-    //Big integer type Balance of a transfer event
-    record.field3 = (balance as Balance).toBigInt();
-    await record.save();
+const checkTransaction = (sectionFilter: string, methodFilter: string, call: Extrinsic) => {
+  const {
+    method: { method, section },
+  } = call
+  return section === sectionFilter && method === methodFilter
 }
 
-export async function handleCall(extrinsic: SubstrateExtrinsic): Promise<void> {
-    const record = await StarterEntity.get(extrinsic.block.block.header.hash.toString());
-    //Date type timestamp
-    record.field4 = extrinsic.block.timestamp;
-    //Boolean tyep
-    record.field5 = true;
-    await record.save();
+export async function moonbeamTermsSigned(extrinsic: SubstrateExtrinsic): Promise<void> {
+  const {
+    isSigned,
+    method: { args },
+  } = extrinsic.extrinsic
+
+  if (!checkTransaction('system', 'remark', extrinsic.extrinsic) || !isSigned || !args[0]) {
+    return
+  }
+
+  const remark = parseRemark(args[0])
+  if (remark === `MoonBeamTermsPDFHash::${MoonBeamTermsPDFHash}`) {
+    logger.info(remark)
+    let account = extrinsic.extrinsic.signer.toString()
+    const record = await MoonbeamTermsSigned.get(account)
+    if (record) {
+      return
+    }
+
+    const newRecord = MoonbeamTermsSigned.create({
+      id: extrinsic.extrinsic.hash.toString(),
+
+      blockHeight: extrinsic.block.block.header.number.toNumber(),
+      account,
+      timestamp: extrinsic.block.timestamp,
+    })
+
+    await newRecord.save()
+  }
 }
-
-
