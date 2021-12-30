@@ -1,8 +1,8 @@
 import { SubstrateExtrinsic } from '@subql/types'
 import type { Extrinsic } from '@polkadot/types/interfaces'
-import { MoonBeamTermsSigned, MoonBeamRewardAddress } from '../types'
+import { MoonbeamTermsSigned, MoonbeamRewardAddress } from '../types'
 
-const MoonBeamTermsPDFHash = `0xc45eb5338b5879ff89d59ecf722cfede2e19a82bdec1948fbb2a0457e1ce3594`
+const MoonbeamTermsPDFHash = `0xc45eb5338b5879ff89d59ecf722cfede2e19a82bdec1948fbb2a0457e1ce3594`
 
 const parseRemark = (remark: { toString: () => string }) => {
   logger.info(`Remark is ${remark.toString()}`)
@@ -16,7 +16,7 @@ const checkTransaction = (sectionFilter: string, methodFilter: string, call: Ext
   return section === sectionFilter && method === methodFilter
 }
 
-export async function handleMoonBeamTermsSigned(extrinsic: SubstrateExtrinsic): Promise<void> {
+export async function handleMoonbeamTermsSigned(extrinsic: SubstrateExtrinsic): Promise<void> {
   const {
     isSigned,
     method: { args },
@@ -27,11 +27,11 @@ export async function handleMoonBeamTermsSigned(extrinsic: SubstrateExtrinsic): 
   }
 
   const remark = parseRemark(args[0])
-  if (remark === `MoonBeamTermsPDFHash::${MoonBeamTermsPDFHash}`) {
+  if (remark === `MoonbeamTermsPDFHash::${MoonbeamTermsPDFHash}`) {
     logger.info(remark)
     let account = extrinsic.extrinsic.signer.toString()
 
-    const newRecord = MoonBeamTermsSigned.create({
+    const newRecord = MoonbeamTermsSigned.create({
       id: extrinsic.extrinsic.hash.toString(),
 
       blockHeight: extrinsic.block.block.header.number.toNumber(),
@@ -43,7 +43,7 @@ export async function handleMoonBeamTermsSigned(extrinsic: SubstrateExtrinsic): 
   }
 }
 
-export async function handleMoonBeamRewardAddress(extrinsic: SubstrateExtrinsic): Promise<void> {
+export async function handleMoonbeamRewardAddress(extrinsic: SubstrateExtrinsic): Promise<void> {
   const {
     isSigned,
     method: { args },
@@ -54,12 +54,12 @@ export async function handleMoonBeamRewardAddress(extrinsic: SubstrateExtrinsic)
   }
 
   const remark = parseRemark(args[0])
-  if (remark && remark.includes('MoonBeamRewardAddress::')) {
+  if (remark && remark.includes('MoonbeamRewardAddress::')) {
     logger.info(remark)
-    let rewardAddress = remark.split('MoonBeamRewardAddress::')[1] || null
+    let rewardAddress = remark.split('MoonbeamRewardAddress::')[1] || null
     if (rewardAddress) {
       let account = extrinsic.extrinsic.signer.toString()
-      const newRecord = MoonBeamRewardAddress.create({
+      const newRecord = MoonbeamRewardAddress.create({
         id: extrinsic.extrinsic.hash.toString(),
 
         blockHeight: extrinsic.block.block.header.number.toNumber(),

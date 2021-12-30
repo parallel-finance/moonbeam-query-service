@@ -1,11 +1,11 @@
-type MoonBeamTermsSigned @entity {
+type MoonbeamTermsSigned @entity {
   id: ID!
   blockHeight: Int!
   account: String! @index
   timestamp: Date!
 }
 
-type MoonBeamRewardAddress @entity {
+type MoonbeamRewardAddress @entity {
   id: ID!
   blockHeight: Int!
   account: String! @index
